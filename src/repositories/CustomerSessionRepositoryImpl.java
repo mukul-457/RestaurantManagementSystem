@@ -2,10 +2,8 @@ package repositories;
 
 import models.CustomerSession;
 
-import java.util.Optional;
-import java.util.HashMap;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.*;
+
 public class CustomerSessionRepositoryImpl implements CustomerSessionRepository{
     private HashMap<Long, ArrayList<CustomerSession>> sessionDb = new HashMap<>();
 
@@ -13,7 +11,7 @@ public class CustomerSessionRepositoryImpl implements CustomerSessionRepository{
         if (sessionDb.containsKey(customerSession.getUser().getId())){
             sessionDb.get(customerSession.getUser().getId()).add(customerSession);
         }else{
-            sessionDb.put(customerSession.getUser().getId(), new ArrayList<>(Arrays.asList(customerSession)));
+            sessionDb.put(customerSession.getUser().getId(), new ArrayList<>(List.of(customerSession)));
         }
         return customerSession;
     }

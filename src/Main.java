@@ -1,20 +1,16 @@
 import controllers.MenuController;
+import controllers.OrderController;
 import controllers.RevenueController;
-import dtos.CalculateRevenueRequestDto;
-import dtos.CalculateRevenueResponseDto;
-import dtos.GetMenuItemsRequestDto;
-import dtos.GetMenuItemsResponseDto;
+import dtos.*;
 import exceptions.UserNotFoundException;
-import models.DietaryRequirement;
-import models.ItemType;
-import models.MenuItem;
-import repositories.DailyRevenueRepositoryImpl;
-import repositories.MenuRepository;
-import repositories.MenuRepositoryImpl;
-import repositories.UserRepositoryImpl;
-import services.MenuService;
-import services.MenuServiceImpl;
-import services.RevenueServiceImpl;
+import models.*;
+import repositories.*;
+import services.*;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class Main {
     public static void main(String[] args) {
@@ -34,18 +30,92 @@ public class Main {
 
         //Test get Menu Items
 
-        MenuRepository menuRepository = new MenuRepositoryImpl();
-        addFewMenuItems(menuRepository);
-        MenuService menuService = new MenuServiceImpl(menuRepository);
-        MenuController menuController = new MenuController(menuService);
-        GetMenuItemsRequestDto requestDto = new GetMenuItemsRequestDto();
-        requestDto.setDietaryRequirement(null);
-        GetMenuItemsResponseDto getMenuItemsResponseDto = menuController.getMenuItems(requestDto);
-        System.out.println(getMenuItemsResponseDto.getResponseStatus());
-        for(MenuItem item : getMenuItemsResponseDto.getMenuItems()){
-            System.out.println(item.getName());
-        }
+//        MenuRepository menuRepository = new MenuRepositoryImpl();
+//        addFewMenuItems(menuRepository);
+//        UserRepository  userRepository = new UserRepositoryImpl();
+//        MenuService menuService = new MenuServiceImpl(menuRepository, userRepository);
+//        MenuController menuController = new MenuController(menuService);
+//        GetMenuItemsRequestDto requestDto = new GetMenuItemsRequestDto();
+//        requestDto.setDietaryRequirement(null);
+//        GetMenuItemsResponseDto getMenuItemsResponseDto = menuController.getMenuItems(requestDto);
+//        System.out.println(getMenuItemsResponseDto.getResponseStatus());
+//        for(MenuItem item : getMenuItemsResponseDto.getMenuItems()){
+//            System.out.println(item.getName());
+//        }
+
+        //Test Order Placement
+
+        MenuItemRepository menuItemRepository = new MenuItemRepositoryImpl();
+        UserRepository userRepository = new UserRepositoryImpl();
+        CustomerSessionRepository csr = new CustomerSessionRepositoryImpl();
+        OrderRepository or = new OrderRepositoryImpl();
+        User user = setupUser(userRepository);
+        List<MenuItem> menuItems = setupMenuItems(menuItemRepository);
+        PlaceOrderRequestDto requestDto = new PlaceOrderRequestDto();
+        requestDto.setUserId(user.getId());
+        Map<Long, Integer> orderedItems = new HashMap<>();
+        orderedItems.put(menuItems.get(0).getId(), 2);
+        orderedItems.put(menuItems.get(1).getId(), 1);
+        OrderService orderService = new OrderServiceImpl(userRepository, csr, or, menuItemRepository);
+        OrderController orderController = new OrderController(orderService);
+        requestDto.setOrderedItems(orderedItems);
+        PlaceOrderResponseDto placeOrderResponseDto = orderController.placeOrder(requestDto);
+        Order order  = placeOrderResponseDto.getOrder();
     }
+
+
+    private static User setupUser(UserRepository userRepository){
+        User user = new User();
+        user.setName("Test User");
+        user.setPhone("1234567890");
+        user.setUserType(UserType.CUSTOMER);
+        return userRepository.save(user);
+    }
+    private static List<MenuItem> setupMenuItems(MenuItemRepository menuItemRepository){
+        List<MenuItem> menuItems = new ArrayList<>();
+        MenuItem menuItem = new MenuItem();
+        menuItem.setName("Paneer Tikka");
+        menuItem.setPrice(200);
+        menuItem.setDietaryRequirement(DietaryRequirement.VEG);
+        menuItem.setItemType(ItemType.REGULAR);
+        menuItem.setDescription("Paneer Tikka is a vegetarian dish from the Indian subcontinent made from paneer marinated in spices and grilled in a tandoor.");
+        menuItems.add(menuItemRepository.add(menuItem));
+
+        menuItem = new MenuItem();
+        menuItem.setName("Chicken Tikka");
+        menuItem.setPrice(300);
+        menuItem.setDietaryRequirement(DietaryRequirement.NON_VEG);
+        menuItem.setItemType(ItemType.REGULAR);
+        menuItem.setDescription("Chicken tikka is a chicken dish originating in the Indian subcontinent; the dish is popular in India, Bangladesh and Pakistan.");
+        menuItems.add(menuItemRepository.add(menuItem));
+
+        menuItem = new MenuItem();
+        menuItem.setName("Chicken Tikka Masala");
+        menuItem.setPrice(400);
+        menuItem.setDietaryRequirement(DietaryRequirement.NON_VEG);
+        menuItem.setItemType(ItemType.REGULAR);
+        menuItem.setDescription("Chicken tikka masala is a dish consisting of roasted marinated chicken chunks (chicken tikka) in spiced curry sauce.");
+        menuItems.add(menuItemRepository.add(menuItem));
+
+        menuItem = new MenuItem();
+        menuItem.setName("Paneer Tandoori");
+        menuItem.setPrice(250);
+        menuItem.setDietaryRequirement(DietaryRequirement.VEG);
+        menuItem.setItemType(ItemType.REGULAR);
+        menuItem.setDescription("Paneer tikka is an Indian dish made from chunks of paneer marinated in spices and grilled in a tandoor.");
+        menuItems.add(menuItemRepository.add(menuItem));
+
+        menuItem = new MenuItem();
+        menuItem.setName("Paneer Tikka Masala");
+        menuItem.setPrice(350);
+        menuItem.setDietaryRequirement(DietaryRequirement.VEG);
+        menuItem.setItemType(ItemType.REGULAR);
+        menuItem.setDescription("Paneer tikka masala is an Indian dish of marinated paneer cheese served in a spiced gravy.");
+        menuItems.add(menuItemRepository.add(menuItem));
+
+        return menuItems;
+    }
+
 
     private static void addFewMenuItems( MenuRepository menuRepository ) {
 

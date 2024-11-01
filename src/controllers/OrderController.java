@@ -1,11 +1,10 @@
 package controllers;
 
 
-import dtos.GenerateBillRequestDto;
-import dtos.GenerateBillResponseDto;
-import dtos.ResponseStatus;
+import dtos.*;
 import exceptions.CustomerSessionNotFound;
 import models.Bill;
+import models.Order;
 import services.OrderService;
 
 public class OrderController {
@@ -28,5 +27,17 @@ public class OrderController {
         return  responseDto;
     }
 
+    public PlaceOrderResponseDto placeOrder(PlaceOrderRequestDto requestDto){
+        PlaceOrderResponseDto responseDto = new PlaceOrderResponseDto();
+        try {
+            Order order = orderService.placeOrder(requestDto.getUserId(), requestDto.getOrderedItems());
+            responseDto.setOrder(order);
+            responseDto.setResponseStatus(ResponseStatus.SUCCESS);
+            return responseDto;
+        } catch (Exception e){
+            responseDto.setResponseStatus(ResponseStatus.FAILURE);
+            return responseDto;
+        }
+    }
 
 }
