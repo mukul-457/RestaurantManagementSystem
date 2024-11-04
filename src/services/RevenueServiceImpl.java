@@ -6,7 +6,9 @@ import models.AggregatedRevenue;
 import models.DailyRevenue;
 import models.User;
 import models.UserType;
+import repositories.DailyRevenueRepository;
 import repositories.DailyRevenueRepositoryImpl;
+import repositories.UserRepository;
 import repositories.UserRepositoryImpl;
 
 import java.util.Calendar;
@@ -15,10 +17,10 @@ import java.util.List;
 import java.util.Optional;
 
 public class RevenueServiceImpl implements RevenueService{
-    private UserRepositoryImpl userRepositoryimpl ;
-    private DailyRevenueRepositoryImpl dailyRevenueRepositoryimpl;
+    private UserRepository userRepositoryimpl ;
+    private DailyRevenueRepository dailyRevenueRepositoryimpl;
 
-    public RevenueServiceImpl(UserRepositoryImpl userRepositoryimpl, DailyRevenueRepositoryImpl dailyRevenueRepositoryimpl){
+    public RevenueServiceImpl(UserRepository userRepositoryimpl, DailyRevenueRepository dailyRevenueRepositoryimpl){
         this.userRepositoryimpl = userRepositoryimpl;
         this.dailyRevenueRepositoryimpl = dailyRevenueRepositoryimpl;
     }

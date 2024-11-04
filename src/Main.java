@@ -1,16 +1,12 @@
-import controllers.MenuController;
 import controllers.OrderController;
 import controllers.RevenueController;
+import controllers.WaitListController;
 import dtos.*;
-import exceptions.UserNotFoundException;
 import models.*;
 import repositories.*;
 import services.*;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class Main {
     public static void main(String[] args) {
@@ -44,25 +40,147 @@ public class Main {
 //        }
 
         //Test Order Placement
+//
+//        MenuItemRepository menuItemRepository = new MenuItemRepositoryImpl();
+//        UserRepository userRepository = new UserRepositoryImpl();
+//        CustomerSessionRepository csr = new CustomerSessionRepositoryImpl();
+//        OrderRepository or = new OrderRepositoryImpl();
+//        User user = setupUser(userRepository);
+//        List<MenuItem> menuItems = setupMenuItems(menuItemRepository);
+//        PlaceOrderRequestDto requestDto = new PlaceOrderRequestDto();
+//        requestDto.setUserId(user.getId());
+//        Map<Long, Integer> orderedItems = new HashMap<>();
+//        orderedItems.put(menuItems.get(0).getId(), 2);
+//        orderedItems.put(menuItems.get(1).getId(), 1);
+//        OrderService orderService = new OrderServiceImpl(userRepository, csr, or, menuItemRepository);
+//        OrderController orderController = new OrderController(orderService);
+//        requestDto.setOrderedItems(orderedItems);
+//        PlaceOrderResponseDto placeOrderResponseDto = orderController.placeOrder(requestDto);
+//        Order order  = placeOrderResponseDto.getOrder();
 
-        MenuItemRepository menuItemRepository = new MenuItemRepositoryImpl();
-        UserRepository userRepository = new UserRepositoryImpl();
-        CustomerSessionRepository csr = new CustomerSessionRepositoryImpl();
-        OrderRepository or = new OrderRepositoryImpl();
-        User user = setupUser(userRepository);
-        List<MenuItem> menuItems = setupMenuItems(menuItemRepository);
-        PlaceOrderRequestDto requestDto = new PlaceOrderRequestDto();
-        requestDto.setUserId(user.getId());
-        Map<Long, Integer> orderedItems = new HashMap<>();
-        orderedItems.put(menuItems.get(0).getId(), 2);
-        orderedItems.put(menuItems.get(1).getId(), 1);
-        OrderService orderService = new OrderServiceImpl(userRepository, csr, or, menuItemRepository);
-        OrderController orderController = new OrderController(orderService);
-        requestDto.setOrderedItems(orderedItems);
-        PlaceOrderResponseDto placeOrderResponseDto = orderController.placeOrder(requestDto);
-        Order order  = placeOrderResponseDto.getOrder();
+        // Test Revenue controller
+
+//        DailyRevenueRepository dailyRevenueRepository = new DailyRevenueRepositoryImpl();
+//        UserRepository userRepository = new UserRepositoryImpl();
+//        insertDummyData(dailyRevenueRepository);
+//        User user = new User();
+//        user.setUserType(UserType.BILLING);
+//        user.setName("Test User");
+//        user.setPhone("1234567890");
+//        userRepository.save(user);
+//        RevenueService revenueService = new RevenueServiceImpl(userRepository, dailyRevenueRepository);
+//        RevenueController revenueController = new RevenueController(revenueService);
+//        CalculateRevenueRequestDto requestDto = new CalculateRevenueRequestDto();
+//        requestDto.setUserId(user.getId());
+//        requestDto.setRevenueQueryType("PREVIOUS_FY");
+//        CalculateRevenueResponseDto calculateRevenueResponseDto = revenueController.calculateRevenue(requestDto);
+//        double ans = calculateRevenueResponseDto.getAggregatedRevenue().getRevenueFromFoodSales();
+//        System.out.println(ans );
+        WaitListPositionRepository wpr = new WaitListPositionRepositoryImpl();
+        UserRepository ur = new UserRepositoryImpl();
+        List<User> users = new ArrayList<>();
+        for(int i=0; i<5; i++){
+            User user = new User();
+            user.setName("User " + i);
+            user.setUserType(UserType.USER);
+            users.add(ur.save(user));
+        }
+        User admUser = new User();
+        admUser.setName("Admin User");
+        admUser.setUserType(UserType.ADMIN);
+        ur.save(admUser);
+        WaitListService service = new WaitListServiceImpl(ur, wpr);
+        WaitListController waitListController = new WaitListController(service);
+        // Adding 1st user to waitlist
+
+        AddUserToWaitListRequestDto addUserToWaitListRequestDto = new AddUserToWaitListRequestDto();
+        addUserToWaitListRequestDto.setUserId(users.get(0).getId());
+        AddUserToWaitListResponseDto addUserToWaitListResponseDto = waitListController.addUserToWaitList(addUserToWaitListRequestDto);
+        //assertEquals(1, addUserToWaitListResponseDto.getPosition(), "Position should be 1");
+
+        // Adding 2nd user to waitlist
+        addUserToWaitListRequestDto = new AddUserToWaitListRequestDto();
+        addUserToWaitListRequestDto.setUserId(users.get(1).getId());
+        addUserToWaitListResponseDto = waitListController.addUserToWaitList(addUserToWaitListRequestDto);
+        //assertEquals(2, addUserToWaitListResponseDto.getPosition(), "Position should be 2");
+
+        // User 2 checks their position
+        GetUserWaitListRequestDto getUserWaitListRequestDto = new GetUserWaitListRequestDto();
+        getUserWaitListRequestDto.setUserId(users.get(1).getId());
+        GetUserWaitListResponseDto getUserWaitListResponseDto = waitListController.getWaitListStatus(getUserWaitListRequestDto);
+        //assertEquals(2, getUserWaitListResponseDto.getPosition(), "Position should be 2");
+
+        // Adding 3rd user to waitlist
+        addUserToWaitListRequestDto = new AddUserToWaitListRequestDto();
+        addUserToWaitListRequestDto.setUserId(users.get(2).getId());
+        addUserToWaitListResponseDto = waitListController.addUserToWaitList(addUserToWaitListRequestDto);
+        //assertEquals(3, addUserToWaitListResponseDto.getPosition(), "Position should be 3");
+
+        // Emptying 2 spots from waitlist
+        UpdateWaitListRequestDto updateWaitListRequestDto = new UpdateWaitListRequestDto();
+        updateWaitListRequestDto.setUserId(admUser.getId());
+        updateWaitListRequestDto.setNumberOfSeats(2);
+        UpdateWaitListResponseDto updateWaitListResponseDto = waitListController.updateWaitList(updateWaitListRequestDto);
+        //assertEquals(ResponseStatus.SUCCESS, updateWaitListResponseDto.getResponseStatus(), "Response status should be SUCCESS");
+
+        // User 1 checks their position -> should be -1
+        getUserWaitListRequestDto = new GetUserWaitListRequestDto();
+        getUserWaitListRequestDto.setUserId(users.get(0).getId());
+        getUserWaitListResponseDto = waitListController.getWaitListStatus(getUserWaitListRequestDto);
+        //assertEquals(-1, getUserWaitListResponseDto.getPosition(), "Position should be -1");
+
+        // User 2 checks their position -> should be -1
+        getUserWaitListRequestDto = new GetUserWaitListRequestDto();
+        getUserWaitListRequestDto.setUserId(users.get(1).getId());
+        getUserWaitListResponseDto = waitListController.getWaitListStatus(getUserWaitListRequestDto);
+        //assertEquals(-1, getUserWaitListResponseDto.getPosition(), "Position should be -1");
+
+        // User 4 added to waitlist
+        addUserToWaitListRequestDto = new AddUserToWaitListRequestDto();
+        addUserToWaitListRequestDto.setUserId(users.get(3).getId());
+        addUserToWaitListResponseDto = waitListController.addUserToWaitList(addUserToWaitListRequestDto);
+        //assertEquals(2, addUserToWaitListResponseDto.getPosition(), "Position should be 2");
+
+        // User 3 checks their position -> should be 1
+        getUserWaitListRequestDto = new GetUserWaitListRequestDto();
+        getUserWaitListRequestDto.setUserId(users.get(2).getId());
+        getUserWaitListResponseDto = waitListController.getWaitListStatus(getUserWaitListRequestDto);
+        //assertEquals(1, getUserWaitListResponseDto.getPosition(), "Position should be 1");
+
+        System.out.println("done");
     }
 
+    private static  void insertDummyData(DailyRevenueRepository dailyRevenueRepository){
+        Calendar calendar = Calendar.getInstance();
+        int year = calendar.get(Calendar.YEAR);
+        int prevYear = year - 1;
+        calendar.set(Calendar.YEAR, prevYear);
+
+        for(int i=0; i<12; i++){
+            DailyRevenue dailyRevenue = new DailyRevenue();
+            double revenueFromFoodSales = 1000 * (i+1);
+            dailyRevenue.setRevenueFromFoodSales(revenueFromFoodSales);
+            dailyRevenue.setTotalGst(revenueFromFoodSales * 0.05);
+            dailyRevenue.setTotalServiceCharge(revenueFromFoodSales * 0.1);
+            calendar.set(Calendar.MONTH, i);
+            calendar.set(Calendar.DAY_OF_MONTH, 1);
+            dailyRevenue.setDate(calendar.getTime());
+            dailyRevenueRepository.save(dailyRevenue);
+        }
+        calendar.set(Calendar.YEAR, year);
+        Date date = new Date();
+        for(int i=0; i< date.getMonth() + 1; i++){
+            DailyRevenue dailyRevenue = new DailyRevenue();
+            double revenueFromFoodSales = 1000 * (i+1);
+            dailyRevenue.setRevenueFromFoodSales(revenueFromFoodSales);
+            dailyRevenue.setTotalGst(revenueFromFoodSales * 0.05);
+            dailyRevenue.setTotalServiceCharge(revenueFromFoodSales * 0.1);
+            calendar.set(Calendar.MONTH, i);
+            calendar.set(Calendar.DAY_OF_MONTH, 1);
+            dailyRevenue.setDate(calendar.getTime());
+            dailyRevenueRepository.save(dailyRevenue);
+        }
+    }
 
     private static User setupUser(UserRepository userRepository){
         User user = new User();
